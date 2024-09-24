@@ -54,4 +54,7 @@
     tx: null
     txhash: 6CFC3BD40E5C644CDEF034D296FB41FCB26BD841B917F18E0F02B1005752C2F5
    ```
-5.
+5. Get contract address: from the explorer
+   ![alt text](image.png)
+6. Save contract address in `src/utils/constants.ts`
+7. 
