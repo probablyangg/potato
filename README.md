@@ -1,5 +1,4 @@
-# potato
-🥔
+# potato 🥔
 
 ## Writing and Deploying an NFT contract on Xion Chain
 1. Clone the repo
