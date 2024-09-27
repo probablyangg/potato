@@ -40,7 +40,7 @@ export default function Page(): JSX.Element {
     };
 
     try {
-      const claimRes = await client?.execute(
+      const exec = await client?.execute(
         bech32Address,
         CONTRACTS.potato,
         msg,
@@ -52,7 +52,30 @@ export default function Page(): JSX.Element {
         [],
       );
 
-      setExecuteResult(claimRes);
+      setExecuteResult(exec);
+    } catch (error) {
+      setExecuteResult(`there was an error (check logs): ${JSON.stringify(error)}`);
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function read() {
+    setLoading(true);
+    setExecuteResult(undefined);
+
+    const msg = {
+      minter: {},
+    };
+
+    try {
+      const exec = await client?.queryContractSmart(
+        CONTRACTS.potato,
+        msg
+      );
+
+      setExecuteResult(exec);
     } catch (error) {
       setExecuteResult(`there was an error (check logs): ${JSON.stringify(error)}`);
       console.log(error);
@@ -92,6 +115,14 @@ export default function Page(): JSX.Element {
           structure="base"
         >
           {loading ? "LOADING..." : "Execute Mint"}
+        </Button>
+        <Button
+          disabled={loading || !bech32Address}
+          fullWidth
+          onClick={() => read()}
+          structure="base"
+        >
+          {loading ? "LOADING..." : "Read Contract"}
         </Button>
         <Button
           disabled={loading || !bech32Address}
