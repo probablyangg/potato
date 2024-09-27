@@ -9,8 +9,33 @@ import { Button } from "@burnt-labs/ui";
 import { useEffect, useState } from "react";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { CONTRACTS } from "@/utils/constants";
+import type {GranteeSignerClient} from "@burnt-labs/abstraxion-core"
 
 type ExecuteResultOrUndefined = ExecuteResult | string | undefined;
+
+
+async function write(client: GranteeSignerClient | undefined, msg: unknown, sender: string, contract: string) {
+  if (!client) return;
+  return client.execute(
+      sender,
+      contract,
+      msg,
+      {
+        amount: [{ amount: "0", denom: "uxion" }],
+        gas: "500000",
+      },
+      "",
+      []
+    );
+}
+
+async function read(client: GranteeSignerClient | undefined, msg: unknown, contract: string) {
+  if (!client) return;
+  return client.queryContractSmart(
+      contract,
+      msg
+    );
+}
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
@@ -27,60 +52,31 @@ export default function Page(): JSX.Element {
   // to display loading state while the function executes
   const [loading, setLoading] = useState(false);
 
-  async function mint() {
-    setLoading(true);
-    setExecuteResult(undefined);
-    const msg = {
-      mint: {
-        token_id: "1",
-        owner: bech32Address,
-        token_uri: null,
-        extension: {}
-      },
-    };
+  const execute = async (type: "read" | "write", msg: unknown) => {
+    setLoading(true)
+    setExecuteResult(undefined)
 
     try {
-      const exec = await client?.execute(
-        bech32Address,
-        CONTRACTS.potato,
-        msg,
-        {
-          amount: [{ amount: "0", denom: "uxion" }],
-          gas: "500000",
-        },
-        "",
-        [],
-      );
+      if (type === "write") {
+        const res = await write(client, msg, bech32Address, CONTRACTS.potato)
+        setExecuteResult(res);
+      }
 
-      setExecuteResult(exec);
-    } catch (error) {
-      setExecuteResult(`there was an error (check logs): ${JSON.stringify(error)}`);
-      console.log(error);
+      if (type === "read") {
+        const res = await read(client, msg, CONTRACTS.potato);
+
+        setExecuteResult(res);
+      }
+
+    } catch(err) {
+
+      setExecuteResult("there was an error, check logs")
+      console.log(err)
+
     } finally {
+
       setLoading(false);
-    }
-  }
 
-  async function read() {
-    setLoading(true);
-    setExecuteResult(undefined);
-
-    const msg = {
-      minter: {},
-    };
-
-    try {
-      const exec = await client?.queryContractSmart(
-        CONTRACTS.potato,
-        msg
-      );
-
-      setExecuteResult(exec);
-    } catch (error) {
-      setExecuteResult(`there was an error (check logs): ${JSON.stringify(error)}`);
-      console.log(error);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -96,42 +92,79 @@ export default function Page(): JSX.Element {
         <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
           Potato 🥔
         </h1>
-        <div className="flex flex-row w-full gap-6">
-        <Button
-            fullWidth
-            onClick={() => { setShow(true) }}
-            structure="base"
-        >
-          {bech32Address ? (
-              <div className="flex items-center justify-center">VIEW ACCOUNT</div>
-          ) : (
-              "CONNECT"
-          )}
-        </Button>
-        <Button
-          disabled={loading || !bech32Address}
-          fullWidth
-          onClick={() => mint()}
-          structure="base"
-        >
-          {loading ? "LOADING..." : "Execute Mint"}
-        </Button>
-        <Button
-          disabled={loading || !bech32Address}
-          fullWidth
-          onClick={() => read()}
-          structure="base"
-        >
-          {loading ? "LOADING..." : "Read Minter"}
-        </Button>
-        <Button
-          disabled={loading || !bech32Address}
-          fullWidth
-          onClick={() => setExecuteResult(undefined)}
-          structure="base"
-        >
-          Reset
-        </Button>
+        <div className="flex flex-col w-full gap-6">
+          <div className="flex flex-row w-full gap-6">
+            <Button
+                fullWidth
+                onClick={() => { setShow(true) }}
+                structure="base"
+            >
+              {bech32Address ? (
+                  <div className="flex items-center justify-center">VIEW ACCOUNT</div>
+              ) : (
+                  "CONNECT"
+              )}
+            </Button>
+            <Button
+              disabled={loading || !bech32Address}
+              fullWidth
+              onClick={() => setExecuteResult(undefined)}
+              structure="base"
+            >
+              Reset
+            </Button>
+          </div>
+          <div className="flex flex-row w-full gap-6">
+            <Button
+              disabled={loading || !bech32Address}
+              fullWidth
+              onClick={() => execute("read", {
+                minter: {}
+              })}
+              structure="base"
+            >
+              {loading ? "LOADING..." : "Read Minter"}
+            </Button>
+
+            <Button
+              disabled={loading || !bech32Address}
+              fullWidth
+              onClick={() => execute("read", { contract_info: {} })}
+              structure="base"
+            >
+              {loading ? "LOADING..." : "Read Contract Info"}
+            </Button>
+
+            <Button
+              disabled={loading || !bech32Address}
+              fullWidth
+              onClick={() => execute("write", {
+                    mint: {
+                      token_id: "1",
+                      owner: bech32Address,
+                      token_uri: null,
+                      extension: {}
+                    },
+                  })}
+              structure="base"
+            >
+              {loading ? "LOADING..." : "Execute Mint"}
+            </Button>
+
+            <Button
+              disabled={loading || !bech32Address}
+              fullWidth
+              onClick={() => execute("write", {
+                transfer_nft: {
+                  token_id: "1",
+                  recipient: bech32Address
+                },
+              })}
+              structure="base"
+            >
+              {loading ? "LOADING..." : "Transfer"}
+            </Button>
+          </div>
         </div>
         {
           bech32Address &&
@@ -139,21 +172,21 @@ export default function Page(): JSX.Element {
                 <div>
                   address
                 </div>
-                <div>
+                <pre className="w-full overflow-auto p-2 text-wrap">
                   {bech32Address}
-                </div>
+                </pre>
                 <div>
                   potato contract
                 </div>
-                <div>
+                <pre className="w-full overflow-auto p-2 text-wrap">
                   {CONTRACTS.potato}
-                </div>
+                </pre>
                 <div>
                   execution result
                 </div>
-                <div>
+                <pre className="w-full overflow-auto p-2 h-60 text-wrap">
                   {JSON.stringify(executeResult)}
-                </div>
+                </pre>
             </div>
         }
         <Abstraxion onClose={() => setShow(false)} />
