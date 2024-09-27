@@ -1,6 +1,8 @@
-export const contracts = [
-  'xion18gn46ys5jtc07vlaq5xk5u7p7nhzauuphy0z5netvn7dhkuwv2mse7l3ul' // potato contract
-]
+export const CONTRACTS = {
+  'potato': 'xion12ed74j6y2km7y6a60d5rmea7ptkjh5k82akpc76at3dfgex388zstruy8t'
+}
+
+export const CONTRACTS_ARRAY = Object.values(CONTRACTS)
 
 export const CHAIN_ID = 'xion-testnet-1'
 export const EXPLORER = `https://explorer.burnt.com/${CHAIN_ID}`

@@ -1,60 +1,96 @@
 # potato 🥔
 
 ## Writing and Deploying an NFT contract on Xion Chain
-1. Clone the repo
-2. build and deploy the sample contract (`./cw721_contract_sample`) -- optional
-    ```
-      RES=$(xiond tx wasm store PATH_TO_ARTIFACT \
-          --chain-id xion-local-testnet-1 \
-          --gas-adjustment 1.3 \
-          --gas-prices 0uxion \
-          --gas auto \
-          -y --output json \
-          --chain-id xion-testnet-1 \
-          --node https://rpc.xion-testnet-1.burnt.com:443 \
-          --from test)
-    ```
 
+> [!NOTE]
+> You don't have to do steps 1-5
+
+1. Clone the CW-NFTs repo
+   ```
+   git clone https://github.com/CosmWasm/cw-nfts
+   ```
+2. Navigate to the directory
+   ```
+   cd cw-nfts
+   ```
+3. Compile and Optimize the Wasm bytecode
+   ```
+    docker run --rm -v "$(pwd)":/code \
+      --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
+      --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+      cosmwasm/optimizer:0.16.0
+   ```
+   We are using CosmWasm's Optimizing Compiler in the above step, it is a tool used to reduce the build size of compiled contracts, making them more efficient for deployment on the blockchain. Read more [here](https://github.com/CosmWasm/optimizer)
+
+   This step will store all the output in the `cw-nfts/artifacts` directory
+
+4. Upload the bytecode to the chain
+    ```
+    $ RES=$(xiond tx wasm store ./artifacts/cw721_base.wasm \
+            --chain-id xion-local-testnet-1 \
+            --gas-adjustment 1.3 \
+            --gas-prices 0uxion \
+            --gas auto \
+            -y --output json \
+            --chain-id xion-testnet-1 \
+            --node https://rpc.xion-testnet-1.burnt.com:443 \
+            --from test)
+    ```
     ```
     $ echo $RES
 
-    {"height":"0","txhash":"E8A2AE9D4532FCDAF4F841F7EB5AB86AC1291C0B3CCCA9699B78983185993842","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+    {"height":"0","txhash":"B557242F3BBF2E68D228EBF6A792C3C617C8C8C984440405A578FBBB8A385035","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
     ```
-3. Get CODE_ID (From the explorer)
+5.  Get CODE_ID
+    Query the chain using the transaction hash from previous step to get the CODE_ID
+
     ```
-    CODE_ID=1203
+    $ CODE_ID=$(xiond query tx B557242F3BBF2E68D228EBF6A792C3C617C8C8C984440405A578FBBB8A385035 --node https://rpc.xion-testnet-1.burnt.com:443 --output json | jq -r '.events[-1].attributes[1].value')
     ```
-4. instantiate the contract
+
+    ```
+    $ echo $CODE_ID
+
+    1213
+    ```
+6.  instantiate the contract
      ```
-    MSG='{
-      "name": "Potato NFT",
-      "symbol": "POTATO",
-      "minter": "xion1vmzvym7t4kn09lzmj9clxk24yanr08xfr6fghg"
-    }'
-   ```
-   ```
+      MSG='{
+        "name": "Potato NFT",
+        "symbol": "POTATO",
+        "minter": "xion12ed74j6y2km7y6a60d5rmea7ptkjh5k82akpc76at3dfgex388zstruy8t"
+      }'
+    ```
+    ```
       xiond tx wasm instantiate $CODE_ID "$MSG" \
         --from test --label "potato nft" --gas-prices 0.025uxion --gas auto --gas-adjustment 1.3 -y --no-admin --chain-id xion-testnet-1 --node https://rpc.xion-testnet-1.burnt.com:443
-   ```
+    ```
 
-   output:
-   ```
-    gas estimate: 234829
-    code: 0
-    codespace: ""
-    data: ""
-    events: []
-    gas_used: "0"
-    gas_wanted: "0"
-    height: "0"
-    info: ""
-    logs: []
-    raw_log: ""
-    timestamp: ""
-    tx: null
-    txhash: 6CFC3BD40E5C644CDEF034D296FB41FCB26BD841B917F18E0F02B1005752C2F5
-   ```
-5. Get contract address: from the explorer
-   ![alt text](image.png)
-6. Save contract address in `src/utils/constants.ts`
-7. 
+    output:
+    ```
+      gas estimate: 217976
+      code: 0
+      codespace: ""
+      data: ""
+      events: []
+      gas_used: "0"
+      gas_wanted: "0"
+      height: "0"
+      info: ""
+      logs: []
+      raw_log: ""
+      timestamp: ""
+      tx: null
+      txhash: 09D48FE11BE8D8BD4FCE11D236D80D180E7ED7707186B1659F5BADC4EC116F30
+    ```
+
+7.  Get contract address: Query the chain using the transaction hash from previous step to get the contract address
+    ```
+      $ CONTRACT=$(xiond query tx 09D48FE11BE8D8BD4FCE11D236D80D180E7ED7707186B1659F5BADC4EC116F30 --node https://rpc.xion-testnet-1.burnt.com:443 --output json | jq -r '.events[-1].attributes[1].value')
+    ```
+    ```
+    $ echo $CONTRACT
+
+    xion1v6476wrjmw8fhsh20rl4h6jadeh5sdvlhrt8jyk2szrl3pdj4musyxj6gl
+    ```
+8.  Save contract address in `src/utils/constants.ts`
