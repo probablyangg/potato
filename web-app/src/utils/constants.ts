@@ -1,5 +1,5 @@
 export const CONTRACTS = {
-  'potato': 'xion12ed74j6y2km7y6a60d5rmea7ptkjh5k82akpc76at3dfgex388zstruy8t'
+  'potato': 'xion1v6476wrjmw8fhsh20rl4h6jadeh5sdvlhrt8jyk2szrl3pdj4musyxj6gl'
 }
 
 export const CONTRACTS_ARRAY = Object.values(CONTRACTS)

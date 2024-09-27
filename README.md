@@ -3,7 +3,7 @@
 ## Writing and Deploying an NFT contract on Xion Chain
 
 > [!NOTE]
-> You don't have to do steps 1-5
+> Steps 1-5 aren't necessary (todo: add more here)
 
 1. Clone the CW-NFTs repo
    ```

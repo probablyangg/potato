@@ -112,6 +112,12 @@ export default function Page(): JSX.Element {
                   {bech32Address}
                 </div>
                 <div>
+                  potato contract
+                </div>
+                <div>
+                  {CONTRACTS.potato}
+                </div>
+                <div>
                   execution result
                 </div>
                 <div>
