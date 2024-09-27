@@ -122,7 +122,7 @@ export default function Page(): JSX.Element {
           onClick={() => read()}
           structure="base"
         >
-          {loading ? "LOADING..." : "Read Contract"}
+          {loading ? "LOADING..." : "Read Minter"}
         </Button>
         <Button
           disabled={loading || !bech32Address}
