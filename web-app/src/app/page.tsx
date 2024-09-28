@@ -8,7 +8,7 @@ import {
 import { Button } from "@burnt-labs/ui";
 import { useEffect, useState } from "react";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
-import { CONTRACTS } from "@/utils/constants";
+import { CONTRACTS, POTATO_ID } from "@/utils/constants";
 import type {GranteeSignerClient} from "@burnt-labs/abstraxion-core"
 
 type ExecuteResultOrUndefined = ExecuteResult | string | undefined;
@@ -45,7 +45,8 @@ export default function Page(): JSX.Element {
   const [,setShow] = useModal();
 
   const [executeResult, setExecuteResult] = useState<ExecuteResultOrUndefined>(undefined);
-
+  const [ownerOfPotato, setOwnerOfPotato] = useState<String | undefined>();
+  const [transferTo, setTransferTo] = useState<string>("");
   const {client}= useAbstraxionSigningClient();
 
 
@@ -87,6 +88,22 @@ export default function Page(): JSX.Element {
     console.log({ isConnected, isConnecting });
   }, [isConnected, isConnecting])
 
+  const getPotatoOwner = async () => {
+    setOwnerOfPotato("Loading...");
+    const msg = { owner_of: { token_id: POTATO_ID } }
+    try {
+      const res = await read(client, msg, CONTRACTS.potato);
+      setOwnerOfPotato(res["owner"]);
+    } catch (err) {
+      console.log(err);
+      setOwnerOfPotato(undefined)
+    }
+  }
+  useEffect(() => {
+    if (!client) return;
+    getPotatoOwner();
+  }, [client, executeResult])
+
   return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 w-full px-12">
         <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
@@ -114,81 +131,93 @@ export default function Page(): JSX.Element {
               Reset
             </Button>
           </div>
-          <div className="flex flex-row w-full gap-6">
+          <div className="flex flex-col w-full gap-6">
+            <div className="flex flex-row w-full gap-6">
+              <Button
+                disabled={loading || !bech32Address}
+                fullWidth
+                onClick={() => execute("read", { minter: {} })}
+                structure="base"
+              >
+                Read Minter
+              </Button>
+              <Button
+                disabled={loading || !bech32Address}
+                fullWidth
+                onClick={() => execute("read", { contract_info: {} })}
+                structure="base"
+              >
+                Read Contract Info
+              </Button>
+            </div>
+            <div className="flex flex-row w-full gap-6">
+            {/* WRITE functions */}
             <Button
-              disabled={loading || !bech32Address}
-              fullWidth
-              onClick={() => execute("read", {
-                minter: {}
-              })}
-              structure="base"
-            >
-              {loading ? "LOADING..." : "Read Minter"}
-            </Button>
-
-            <Button
-              disabled={loading || !bech32Address}
-              fullWidth
-              onClick={() => execute("read", { contract_info: {} })}
-              structure="base"
-            >
-              {loading ? "LOADING..." : "Read Contract Info"}
-            </Button>
-
-            <Button
-              disabled={loading || !bech32Address}
-              fullWidth
+              disabled={loading || !bech32Address || !!(ownerOfPotato)}
               onClick={() => execute("write", {
                     mint: {
-                      token_id: "1",
+                      token_id: POTATO_ID,
                       owner: bech32Address,
                       token_uri: null,
                       extension: {}
                     },
                   })}
               structure="base"
+              className="w-[50%]"
             >
-              {loading ? "LOADING..." : "Execute Mint"}
+              Execute Mint
             </Button>
-
-            <Button
-              disabled={loading || !bech32Address}
-              fullWidth
-              onClick={() => execute("write", {
-                transfer_nft: {
-                  token_id: "1",
-                  recipient: bech32Address
-                },
-              })}
-              structure="base"
-            >
-              {loading ? "LOADING..." : "Transfer"}
-            </Button>
+            <div className="flex flex-row gap-2 w-[50%]">
+              <input type="text" name="recipient" id="recipient" className="grow rounded-md text-black bg-primary border-2 border-foreground ring-0 active:ring-0" disabled={ownerOfPotato !== bech32Address} value={transferTo} onChange={(v) => setTransferTo(v.target.value)}  />
+              <Button
+                disabled={loading || !bech32Address || ownerOfPotato !== bech32Address}
+                onClick={() => execute("write", {
+                  transfer_nft: {
+                    token_id: "1",
+                    recipient: transferTo
+                  },
+                })}
+                structure="base"
+              >
+                Transfer
+              </Button>
+            </div>
+            </div>
           </div>
         </div>
-        {
-          bech32Address &&
-            <div className="border-2 border-primary rounded-md p-4 grid grid-cols-[30%_70%] grid-flow-row gap-4 w-full">
-                <div>
-                  address
-                </div>
-                <pre className="w-full overflow-auto p-2 text-wrap">
-                  {bech32Address}
-                </pre>
-                <div>
-                  potato contract
-                </div>
-                <pre className="w-full overflow-auto p-2 text-wrap">
-                  {CONTRACTS.potato}
-                </pre>
-                <div>
-                  execution result
-                </div>
-                <pre className="w-full overflow-auto p-2 h-60 text-wrap">
-                  {JSON.stringify(executeResult)}
-                </pre>
+        <div className="border-2 border-primary rounded-md p-4 grid grid-cols-[30%_70%] grid-flow-row gap-4 w-full">
+            <div>
+              your account address
             </div>
-        }
+            <pre className="w-full overflow-auto p-2 text-wrap">
+              {bech32Address}
+            </pre>
+            <div>
+              potato contract
+            </div>
+            <pre className="w-full overflow-auto p-2 text-wrap">
+              {CONTRACTS.potato}
+            </pre>
+            <div>
+              Potato ID
+            </div>
+            <pre>
+              {POTATO_ID}
+            </pre>
+            <div>
+              Potato Current Owner
+            </div>
+            <pre>
+              {/* query the contract */}
+              {ownerOfPotato || "Owner undefined"}{ownerOfPotato === bech32Address && ` (You! 🫵)`}
+            </pre>
+            <div>
+              execution result
+            </div>
+            <pre className="w-full overflow-auto p-2 h-60 text-wrap">
+              {loading ? "Loading..." : JSON.stringify(executeResult, (_, v) => typeof v === "bigint" ? v.toString() : v)}
+            </pre>
+        </div>
         <Abstraxion onClose={() => setShow(false)} />
       </main>
   );
