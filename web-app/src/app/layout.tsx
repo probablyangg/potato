@@ -5,6 +5,7 @@ import {AbstraxionProvider} from "@burnt-labs/abstraxion";
 
 import "@burnt-labs/abstraxion/dist/index.css";
 import "@burnt-labs/ui/dist/index.css";
+// import { CONTRACTS_ARRAY, TREASURY } from '@/utils/constants';
 import { CONTRACTS_ARRAY } from '@/utils/constants';
 
 const inter = Inter({ subsets: ['latin'] })
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        {/* <AbstraxionProvider config={{ ...TREASURY }} > */}
         <AbstraxionProvider config={{ contracts: CONTRACTS_ARRAY }} >
           {children}
         </AbstraxionProvider>
