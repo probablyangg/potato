@@ -45,7 +45,7 @@ export default function Page(): JSX.Element {
   const [,setShow] = useModal();
 
   const [executeResult, setExecuteResult] = useState<ExecuteResultOrUndefined>(undefined);
-  const [ownerOfPotato, setOwnerOfPotato] = useState<String | undefined>();
+  const [ownerOfPotato, setOwnerOfPotato] = useState<string | undefined>();
   const [transferTo, setTransferTo] = useState<string>("");
   const {client}= useAbstraxionSigningClient();
 
