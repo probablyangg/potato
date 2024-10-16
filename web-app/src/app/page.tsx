@@ -8,7 +8,7 @@ import {
 import { Button } from "@burnt-labs/ui";
 import { useEffect, useState } from "react";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
-import { CONTRACTS, POTATO_ID } from "@/utils/constants";
+import { CONTRACTS, POTATO_ID, TREASURY } from "@/utils/constants";
 import type {GranteeSignerClient} from "@burnt-labs/abstraxion-core"
 
 type ExecuteResultOrUndefined = ExecuteResult | string | undefined;
@@ -21,8 +21,9 @@ async function write(client: GranteeSignerClient | undefined, msg: unknown, send
       contract,
       msg,
       {
-        amount: [{ amount: "0", denom: "uxion" }],
+        amount: [{ amount: "1", denom: "uxion" }],
         gas: "500000",
+        granter: TREASURY.treasury
       },
       "",
       []
