@@ -27,9 +27,8 @@
 4. Upload the bytecode to the chain
     ```
     $ RES=$(xiond tx wasm store ./artifacts/cw721_base.wasm \
-            --chain-id xion-local-testnet-1 \
             --gas-adjustment 1.3 \
-            --gas-prices 0uxion \
+            --gas-prices 0.001uxion \
             --gas auto \
             -y --output json \
             --chain-id xion-testnet-1 \
